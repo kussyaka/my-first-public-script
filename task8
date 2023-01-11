@@ -1,0 +1,71 @@
+#!/bin/bash
+
+if [ $(id -u) != 0 ]
+then
+    echo "Need root permission" >&2
+    exit 1
+fi
+
+cp /etc/passwd{,.bkp}
+cp /etc/group{,.bkp}
+
+read -p "Print username: " username
+
+echo "$(id $username)"
+
+flag=-u
+
+read -p "Want to change something?(+/-): " command
+
+if [ $command = + ]
+then
+    read -p "Print what you want to change(uid, guid, home directory): " changer
+else
+    echo "Thx for use script" >&1
+    exit 0
+fi
+
+
+if [[ "$changer" == "uid" ]]
+   then
+      read -p "Pls write new uid: " uid
+      if  grep "$uid" /etc/passwd
+      then
+         read -p "Pls write uid again: " uid
+         usermod -u $uid $username
+         echo 'usermod '$flag" $uid $username"
+      else
+         usermod -u $uid $username
+         echo 'usermod '$flag" $uid $username"
+      fi
+elif [[ "$changer" = "home" ]]
+    then
+       read -p "PLs, write new directory: " dir
+       read -p "Do you wanna move files?(yes/no)" movefiles
+       if [ "$movefiles" = yes ]
+       then
+          flag="-m -d"
+          usermod -m -d $dir $username
+          echo 'usermod '$flag" $dir $username"
+       else
+          flag="-d"
+          usermod -d $dir $username
+          echo 'usermod '$flag" $dir $username"
+       fi
+elif [[ "$changer" = "guid" ]]
+then
+   read -p "DO you wanna changer additional or main group? " group
+   if [ $group = "additional" ]
+   then
+      read -p "Write auid: " auid
+      flag="-aG"
+      usermod -aG $auid $username
+      echo 'usermod '$flag" $auid $username"
+   else
+      flag="-g"
+      read -p "Write new guid: " guid
+      usermod -g $guid $username
+      echo 'usermod '$flag" $guid $username"
+   fi
+fi
+
